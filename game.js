@@ -83,6 +83,34 @@ function init() {
     setupEventListeners();
 }
 
+function appendTerrainSegment() {
+    const index = terrain.length;
+    terrain.push({
+        x: index * SEGMENT_WIDTH,
+        y: terrainPhase.currentHeight
+    });
+    
+    if (index < 15) {
+        terrainPhase.currentHeight = GROUND_Y;
+        return;
+    }
+    
+    terrainPhase.large += 0.02;
+    terrainPhase.medium += 0.055;
+    terrainPhase.small += 0.15;
+    
+    const largeHill = Math.sin(terrainPhase.large) * 100;
+    const mediumHill = Math.sin(terrainPhase.medium) * 45;
+    const smallHill = Math.sin(terrainPhase.small) * 16;
+    const randomNoise = (Math.random() - 0.5) * 6;
+    
+    let targetHeight = GROUND_Y + largeHill + mediumHill + smallHill + randomNoise;
+    
+    targetHeight = Math.max(CANVAS_HEIGHT * 0.22, Math.min(CANVAS_HEIGHT * 0.92, targetHeight));
+    
+    terrainPhase.currentHeight += (targetHeight - terrainPhase.currentHeight) * 0.18;
+}
+
 function generateTerrain() {
     terrain = [];
     terrainPhase.large = 0;
@@ -91,58 +119,19 @@ function generateTerrain() {
     terrainPhase.currentHeight = GROUND_Y;
     
     for (let i = 0; i < TERRAIN_SEGMENTS; i++) {
-        terrain.push({
-            x: i * SEGMENT_WIDTH,
-            y: terrainPhase.currentHeight
-        });
-        
-        if (i < 15) {
-            terrainPhase.currentHeight = GROUND_Y;
-            continue;
-        }
-        
-        terrainPhase.large += 0.015;
-        terrainPhase.medium += 0.04;
-        terrainPhase.small += 0.12;
-        
-        const largeHill = Math.sin(terrainPhase.large) * 60;
-        const mediumHill = Math.sin(terrainPhase.medium) * 25;
-        const smallHill = Math.sin(terrainPhase.small) * 10;
-        const randomNoise = (Math.random() - 0.5) * 4;
-        
-        let targetHeight = GROUND_Y + largeHill + mediumHill + smallHill + randomNoise;
-        
-        targetHeight = Math.max(CANVAS_HEIGHT * 0.3, Math.min(CANVAS_HEIGHT * 0.88, targetHeight));
-        
-        terrainPhase.currentHeight += (targetHeight - terrainPhase.currentHeight) * 0.1;
+        appendTerrainSegment();
     }
 }
 
-function extendTerrain() {
-    const startIndex = terrain.length;
-    const segmentsToAdd = 300;
-    
+function extendTerrain(segmentsToAdd = 300) {
     for (let i = 0; i < segmentsToAdd; i++) {
-        const index = startIndex + i;
-        terrain.push({
-            x: index * SEGMENT_WIDTH,
-            y: terrainPhase.currentHeight
-        });
-        
-        terrainPhase.large += 0.015;
-        terrainPhase.medium += 0.04;
-        terrainPhase.small += 0.12;
-        
-        const largeHill = Math.sin(terrainPhase.large) * 60;
-        const mediumHill = Math.sin(terrainPhase.medium) * 25;
-        const smallHill = Math.sin(terrainPhase.small) * 10;
-        const randomNoise = (Math.random() - 0.5) * 4;
-        
-        let targetHeight = GROUND_Y + largeHill + mediumHill + smallHill + randomNoise;
-        
-        targetHeight = Math.max(CANVAS_HEIGHT * 0.3, Math.min(CANVAS_HEIGHT * 0.88, targetHeight));
-        
-        terrainPhase.currentHeight += (targetHeight - terrainPhase.currentHeight) * 0.1;
+        appendTerrainSegment();
+    }
+}
+
+function ensureTerrainUpTo(x) {
+    while ((terrain.length - 1) * SEGMENT_WIDTH < x) {
+        appendTerrainSegment();
     }
 }
 
@@ -151,7 +140,7 @@ function getTerrainHeight(x) {
     
     const index = Math.floor(x / SEGMENT_WIDTH);
     if (index >= terrain.length - 1) {
-        extendTerrain();
+        ensureTerrainUpTo(x + SEGMENT_WIDTH * 2);
     }
     
     if (index >= terrain.length - 1) {
@@ -276,21 +265,21 @@ function updatePhysics() {
         }
         
         if (rearOnGround && !frontOnGround) {
-            bike.angularVelocity += 0.025;
+            bike.angularVelocity += 0.012;
         }
         if (frontOnGround && !rearOnGround) {
             bike.angularVelocity -= 0.025;
         }
         
         if (keys.right && rearOnGround) {
-            bike.angularVelocity -= 0.012;
+            bike.angularVelocity -= 0.012 + Math.max(0, bike.vx) * 0.0018;
         }
         if (keys.left && frontOnGround) {
             bike.angularVelocity += 0.015;
         }
     } else {
         if (keys.right) {
-            bike.angularVelocity -= 0.008;
+            bike.angularVelocity -= 0.014;
         }
         if (keys.left) {
             bike.angularVelocity += 0.008;
@@ -401,6 +390,8 @@ function drawCloud(x, y) {
 }
 
 function drawTerrain() {
+    ensureTerrainUpTo(camera.x + CANVAS_WIDTH + SEGMENT_WIDTH * 4);
+    
     const startIndex = Math.max(0, Math.floor(camera.x / SEGMENT_WIDTH) - 2);
     const endIndex = Math.min(terrain.length - 1, Math.ceil((camera.x + CANVAS_WIDTH) / SEGMENT_WIDTH) + 2);
     
