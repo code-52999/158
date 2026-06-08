@@ -26,8 +26,15 @@ const BIKE_WIDTH = 80;
 const BIKE_HEIGHT = 40;
 
 let terrain = [];
-const TERRAIN_SEGMENTS = 500;
+const TERRAIN_SEGMENTS = 800;
 const SEGMENT_WIDTH = 30;
+
+let terrainPhase = {
+    large: 0,
+    medium: 0,
+    small: 0,
+    currentHeight: 0
+};
 
 let bike = {
     x: 200,
@@ -58,7 +65,15 @@ let keys = {
 
 let gameState = 'start';
 let distance = 0;
-let bestDistance = parseInt(localStorage.getItem('bikeGameBest')) || 0;
+let bestDistance = 0;
+try {
+    const saved = localStorage.getItem('bikeGameBest');
+    if (saved) {
+        bestDistance = parseInt(saved) || 0;
+    }
+} catch (e) {
+    bestDistance = 0;
+}
 let gameOverReason = '';
 
 function init() {
@@ -70,37 +85,64 @@ function init() {
 
 function generateTerrain() {
     terrain = [];
-    let height = GROUND_Y;
-    
-    let largeHillPhase = 0;
-    let mediumHillPhase = Math.random() * Math.PI * 2;
-    let smallHillPhase = Math.random() * Math.PI * 2;
+    terrainPhase.large = 0;
+    terrainPhase.medium = Math.random() * Math.PI * 2;
+    terrainPhase.small = Math.random() * Math.PI * 2;
+    terrainPhase.currentHeight = GROUND_Y;
     
     for (let i = 0; i < TERRAIN_SEGMENTS; i++) {
         terrain.push({
             x: i * SEGMENT_WIDTH,
-            y: height
+            y: terrainPhase.currentHeight
         });
         
         if (i < 15) {
-            height = GROUND_Y;
+            terrainPhase.currentHeight = GROUND_Y;
             continue;
         }
         
-        largeHillPhase += 0.015;
-        mediumHillPhase += 0.04;
-        smallHillPhase += 0.12;
+        terrainPhase.large += 0.015;
+        terrainPhase.medium += 0.04;
+        terrainPhase.small += 0.12;
         
-        const largeHill = Math.sin(largeHillPhase) * 60;
-        const mediumHill = Math.sin(mediumHillPhase) * 25;
-        const smallHill = Math.sin(smallHillPhase) * 10;
+        const largeHill = Math.sin(terrainPhase.large) * 60;
+        const mediumHill = Math.sin(terrainPhase.medium) * 25;
+        const smallHill = Math.sin(terrainPhase.small) * 10;
         const randomNoise = (Math.random() - 0.5) * 4;
         
         let targetHeight = GROUND_Y + largeHill + mediumHill + smallHill + randomNoise;
         
         targetHeight = Math.max(CANVAS_HEIGHT * 0.3, Math.min(CANVAS_HEIGHT * 0.88, targetHeight));
         
-        height += (targetHeight - height) * 0.1;
+        terrainPhase.currentHeight += (targetHeight - terrainPhase.currentHeight) * 0.1;
+    }
+}
+
+function extendTerrain() {
+    const startIndex = terrain.length;
+    const segmentsToAdd = 300;
+    
+    for (let i = 0; i < segmentsToAdd; i++) {
+        const index = startIndex + i;
+        terrain.push({
+            x: index * SEGMENT_WIDTH,
+            y: terrainPhase.currentHeight
+        });
+        
+        terrainPhase.large += 0.015;
+        terrainPhase.medium += 0.04;
+        terrainPhase.small += 0.12;
+        
+        const largeHill = Math.sin(terrainPhase.large) * 60;
+        const mediumHill = Math.sin(terrainPhase.medium) * 25;
+        const smallHill = Math.sin(terrainPhase.small) * 10;
+        const randomNoise = (Math.random() - 0.5) * 4;
+        
+        let targetHeight = GROUND_Y + largeHill + mediumHill + smallHill + randomNoise;
+        
+        targetHeight = Math.max(CANVAS_HEIGHT * 0.3, Math.min(CANVAS_HEIGHT * 0.88, targetHeight));
+        
+        terrainPhase.currentHeight += (targetHeight - terrainPhase.currentHeight) * 0.1;
     }
 }
 
@@ -108,6 +150,10 @@ function getTerrainHeight(x) {
     if (x < 0) return terrain[0].y;
     
     const index = Math.floor(x / SEGMENT_WIDTH);
+    if (index >= terrain.length - 1) {
+        extendTerrain();
+    }
+    
     if (index >= terrain.length - 1) {
         return terrain[terrain.length - 1].y;
     }
@@ -208,19 +254,25 @@ function updatePhysics() {
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         
-        bike.angle += angleDiff * 0.3;
-        bike.angularVelocity += angleDiff * 0.1;
+        bike.angle += angleDiff * 0.4;
+        bike.angularVelocity += angleDiff * 0.15;
         
         if (rearOnGround && frontOnGround) {
             bike.vx *= FRICTION;
             
-            const normalAngle = getTerrainAngle(bike.x) + Math.PI / 2;
+            const terrainAngle = getTerrainAngle(bike.x);
+            const normalAngle = terrainAngle + Math.PI / 2;
             const normalV = bike.vx * Math.cos(normalAngle) + bike.vy * Math.sin(normalAngle);
             
             if (normalV > 0) {
-                bike.vx -= normalV * Math.cos(normalAngle) * 0.5;
-                bike.vy -= normalV * Math.sin(normalAngle) * 0.5;
+                bike.vx -= normalV * Math.cos(normalAngle) * 0.8;
+                bike.vy -= normalV * Math.sin(normalAngle) * 0.8;
             }
+            
+            const tangentAngle = terrainAngle;
+            const tangentV = bike.vx * Math.cos(tangentAngle) + bike.vy * Math.sin(tangentAngle);
+            bike.vx = tangentV * Math.cos(terrainAngle);
+            bike.vy = tangentV * Math.sin(terrainAngle);
         }
         
         if (rearOnGround && !frontOnGround) {
@@ -292,7 +344,9 @@ function endGame(reason) {
     
     if (distance > bestDistance) {
         bestDistance = distance;
-        localStorage.setItem('bikeGameBest', bestDistance);
+        try {
+            localStorage.setItem('bikeGameBest', bestDistance);
+        } catch (e) {}
         bestDistanceDisplay.textContent = bestDistance;
     }
     
