@@ -1,0 +1,15 @@
+@media (max-width: 960px) {
+    .game-container {
+        padding: var(--spacing-sm);
+    }
+
+    #gameCanvas {
+        width: 100%;
+        height: auto;
+    }
+
+    .game-over h2,
+    .start-screen h1 {
+        font-size: 2rem;
+    }
+}

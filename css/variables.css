@@ -1,0 +1,51 @@
+:root {
+    --color-sky-top: #87CEEB;
+    --color-sky-mid: #98D8C8;
+    --color-sky-bottom: #90EE90;
+
+    --color-white: #fff;
+    --color-black: #000;
+    --color-dark: #333;
+    --color-gray: #666;
+    --color-light-gray: #888;
+    --color-border-gray: #ddd;
+    --color-bg-gray: #f0f0f0;
+
+    --color-primary: #e74c3c;
+    --color-primary-dark: #c0392b;
+    --color-secondary: #f39c12;
+    --color-success: #2ecc71;
+    --color-warning: #ffeb3b;
+
+    --font-family: 'Comic Sans MS', 'Microsoft YaHei', cursive, sans-serif;
+
+    --spacing-xs: 5px;
+    --spacing-sm: 10px;
+    --spacing-md: 15px;
+    --spacing-lg: 20px;
+    --spacing-xl: 25px;
+    --spacing-2xl: 30px;
+    --spacing-3xl: 40px;
+
+    --border-radius-sm: 12px;
+    --border-radius-md: 20px;
+    --border-radius-lg: 30px;
+
+    --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.4);
+    --shadow-container: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+    --font-size-xs: 14px;
+    --font-size-sm: 16px;
+    --font-size-md: 18px;
+    --font-size-lg: 22px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 26px;
+    --font-size-3xl: 32px;
+    --font-size-4xl: 48px;
+
+    --canvas-border: 4px solid #333;
+    --modal-overlay: rgba(0, 0, 0, 0.7);
+
+    --transition-fast: all 0.2s ease;
+}

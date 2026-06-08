@@ -1,0 +1,45 @@
+.game-container {
+    position: relative;
+    background: var(--color-white);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-container);
+    padding: var(--spacing-lg);
+    overflow: hidden;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding: 0 var(--spacing-sm);
+}
+
+#gameCanvas {
+    display: block;
+    border-radius: var(--border-radius-sm);
+    border: var(--canvas-border);
+    background: linear-gradient(
+        180deg,
+        var(--color-sky-top) 0%,
+        #B0E0E6 60%,
+        var(--color-sky-mid) 100%
+    );
+    cursor: pointer;
+}
+
+.controls-hint {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-2xl);
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-gray);
+}
+
+.controls-hint span {
+    background: var(--color-bg-gray);
+    padding: 8px 16px;
+    border-radius: var(--border-radius-lg);
+    border: 2px solid var(--color-border-gray);
+}
